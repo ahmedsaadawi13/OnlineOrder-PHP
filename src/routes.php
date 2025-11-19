@@ -12,21 +12,23 @@ $router = app()->router();
 // PUBLIC ROUTES (No authentication required)
 // ============================================
 
-// Health check
+// Health check (no rate limiting for monitoring)
 $router->get('/api/v1/health', function() {
     return (new \App\Core\Response())->json(['status' => 'ok'], 200);
 });
 
-// Authentication
-$router->post('/api/v1/auth/register', 'Auth\AuthController@register');
-$router->post('/api/v1/auth/login', 'Auth\AuthController@login');
-$router->post('/api/v1/auth/refresh', 'Auth\AuthController@refresh');
+// Authentication (with rate limiting to prevent brute force)
+$router->group(['middleware' => ['ratelimit']], function($router) {
+    $router->post('/api/v1/auth/register', 'Auth\AuthController@register');
+    $router->post('/api/v1/auth/login', 'Auth\AuthController@login');
+    $router->post('/api/v1/auth/refresh', 'Auth\AuthController@refresh');
+});
 
 // ============================================
 // AUTHENTICATED ROUTES
 // ============================================
 
-$router->group(['middleware' => ['auth', 'tenant']], function($router) {
+$router->group(['middleware' => ['ratelimit', 'auth', 'tenant']], function($router) {
 
     // Auth endpoints
     $router->post('/api/v1/auth/logout', 'Auth\AuthController@logout');

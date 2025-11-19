@@ -151,6 +151,7 @@ class Router
             'tenant' => \App\Middleware\TenantMiddleware::class,
             'role' => \App\Middleware\RoleMiddleware::class,
             'cors' => \App\Middleware\CorsMiddleware::class,
+            'ratelimit' => \App\Middleware\RateLimitMiddleware::class,
         ];
 
         $className = $middlewareMap[$name] ?? $name;
