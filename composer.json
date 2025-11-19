@@ -1,0 +1,60 @@
+{
+    "name": "restaurant/online-order-saas",
+    "description": "Multi-tenant Restaurant Online Ordering SaaS Platform",
+    "type": "project",
+    "keywords": ["restaurant", "saas", "online-ordering", "food-delivery", "multi-tenant"],
+    "license": "MIT",
+    "require": {
+        "php": "^8.2",
+        "ext-pdo": "*",
+        "ext-redis": "*",
+        "ext-json": "*",
+        "ext-mbstring": "*",
+        "ext-curl": "*",
+        "vlucas/phpdotenv": "^5.5",
+        "firebase/php-jwt": "^6.8",
+        "stripe/stripe-php": "^10.0",
+        "guzzlehttp/guzzle": "^7.7",
+        "respect/validation": "^2.2",
+        "phpmailer/phpmailer": "^6.8",
+        "predis/predis": "^2.2"
+    },
+    "require-dev": {
+        "phpunit/phpunit": "^10.0",
+        "squizlabs/php_codesniffer": "^3.7",
+        "phpstan/phpstan": "^1.10"
+    },
+    "autoload": {
+        "psr-4": {
+            "App\\": "src/"
+        },
+        "files": [
+            "src/Helpers/functions.php"
+        ]
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Tests\\": "tests/"
+        }
+    },
+    "scripts": {
+        "test": "phpunit",
+        "test:coverage": "phpunit --coverage-html coverage",
+        "cs": "phpcs src/ --standard=PSR12",
+        "cs:fix": "phpcbf src/ --standard=PSR12",
+        "stan": "phpstan analyse src/ --level=5",
+        "post-autoload-dump": [
+            "@php -r \"file_exists('.env') || copy('.env.example', '.env');\""
+        ]
+    },
+    "config": {
+        "optimize-autoloader": true,
+        "preferred-install": "dist",
+        "sort-packages": true,
+        "allow-plugins": {
+            "php-http/discovery": true
+        }
+    },
+    "minimum-stability": "stable",
+    "prefer-stable": true
+}
