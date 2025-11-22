@@ -17,6 +17,9 @@ $router->get('/api/v1/health', function() {
     return (new \App\Core\Response())->json(['status' => 'ok'], 200);
 });
 
+// Stripe webhook (no authentication required - Stripe calls this)
+$router->post('/api/v1/payments/webhook', 'Payment\PaymentController@webhook');
+
 // Authentication (with rate limiting to prevent brute force)
 $router->group(['middleware' => ['ratelimit']], function($router) {
     $router->post('/api/v1/auth/register', 'Auth\AuthController@register');
@@ -69,6 +72,9 @@ $router->group(['middleware' => ['ratelimit', 'auth', 'tenant']], function($rout
     $router->put('/api/v1/branches/{id}', 'Branch\BranchController@update');
     $router->delete('/api/v1/branches/{id}', 'Branch\BranchController@destroy');
     $router->post('/api/v1/branches/{id}/hours', 'Branch\BranchController@setHours');
+
+    // Payment Management (Refunds)
+    $router->post('/api/v1/payments/order/{order_id}/refund', 'Payment\PaymentController@refund');
 });
 
 // ============================================
@@ -86,6 +92,11 @@ $router->group(['middleware' => ['ratelimit']], function($router) {
     $router->post('/api/v1/customers/addresses', 'Customer\CustomerController@addAddress');
     $router->put('/api/v1/customers/addresses/{id}', 'Customer\CustomerController@updateAddress');
     $router->delete('/api/v1/customers/addresses/{id}', 'Customer\CustomerController@deleteAddress');
+
+    // Customer payments
+    $router->post('/api/v1/payments/intent', 'Payment\PaymentController@createIntent');
+    $router->post('/api/v1/payments/confirm', 'Payment\PaymentController@confirmPayment');
+    $router->get('/api/v1/payments/order/{order_id}', 'Payment\PaymentController@show');
 });
 
 return $router;
