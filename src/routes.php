@@ -22,6 +22,10 @@ $router->group(['middleware' => ['ratelimit']], function($router) {
     $router->post('/api/v1/auth/register', 'Auth\AuthController@register');
     $router->post('/api/v1/auth/login', 'Auth\AuthController@login');
     $router->post('/api/v1/auth/refresh', 'Auth\AuthController@refresh');
+
+    // Customer authentication (guest checkout)
+    $router->post('/api/v1/customers/register', 'Customer\CustomerController@register');
+    $router->post('/api/v1/customers/login', 'Customer\CustomerController@login');
 });
 
 // ============================================
@@ -54,6 +58,23 @@ $router->group(['middleware' => ['ratelimit', 'auth', 'tenant']], function($rout
     $router->post('/api/v1/orders', 'Order\OrderController@store');
     $router->put('/api/v1/orders/{id}/status', 'Order\OrderController@updateStatus');
     $router->delete('/api/v1/orders/{id}', 'Order\OrderController@cancel');
+});
+
+// ============================================
+// CUSTOMER ROUTES (Session-based for guest checkout)
+// ============================================
+
+$router->group(['middleware' => ['ratelimit']], function($router) {
+    // Customer profile
+    $router->get('/api/v1/customers/me', 'Customer\CustomerController@me');
+    $router->put('/api/v1/customers/me', 'Customer\CustomerController@update');
+    $router->post('/api/v1/customers/logout', 'Customer\CustomerController@logout');
+
+    // Customer addresses
+    $router->get('/api/v1/customers/addresses', 'Customer\CustomerController@listAddresses');
+    $router->post('/api/v1/customers/addresses', 'Customer\CustomerController@addAddress');
+    $router->put('/api/v1/customers/addresses/{id}', 'Customer\CustomerController@updateAddress');
+    $router->delete('/api/v1/customers/addresses/{id}', 'Customer\CustomerController@deleteAddress');
 });
 
 return $router;
