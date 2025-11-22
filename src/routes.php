@@ -26,6 +26,10 @@ $router->group(['middleware' => ['ratelimit']], function($router) {
     // Customer authentication (guest checkout)
     $router->post('/api/v1/customers/register', 'Customer\CustomerController@register');
     $router->post('/api/v1/customers/login', 'Customer\CustomerController@login');
+
+    // Public branches (for customer ordering - view active branches)
+    $router->get('/api/v1/branches/active', 'Branch\BranchController@active');
+    $router->get('/api/v1/branches/{id}', 'Branch\BranchController@show');
 });
 
 // ============================================
@@ -58,6 +62,13 @@ $router->group(['middleware' => ['ratelimit', 'auth', 'tenant']], function($rout
     $router->post('/api/v1/orders', 'Order\OrderController@store');
     $router->put('/api/v1/orders/{id}/status', 'Order\OrderController@updateStatus');
     $router->delete('/api/v1/orders/{id}', 'Order\OrderController@cancel');
+
+    // Branches (Restaurant Management)
+    $router->get('/api/v1/branches', 'Branch\BranchController@index');
+    $router->post('/api/v1/branches', 'Branch\BranchController@store');
+    $router->put('/api/v1/branches/{id}', 'Branch\BranchController@update');
+    $router->delete('/api/v1/branches/{id}', 'Branch\BranchController@destroy');
+    $router->post('/api/v1/branches/{id}/hours', 'Branch\BranchController@setHours');
 });
 
 // ============================================
