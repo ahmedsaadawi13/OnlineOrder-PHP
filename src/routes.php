@@ -12,21 +12,34 @@ $router = app()->router();
 // PUBLIC ROUTES (No authentication required)
 // ============================================
 
-// Health check
+// Health check (no rate limiting for monitoring)
 $router->get('/api/v1/health', function() {
     return (new \App\Core\Response())->json(['status' => 'ok'], 200);
 });
 
-// Authentication
-$router->post('/api/v1/auth/register', 'Auth\AuthController@register');
-$router->post('/api/v1/auth/login', 'Auth\AuthController@login');
-$router->post('/api/v1/auth/refresh', 'Auth\AuthController@refresh');
+// Stripe webhook (no authentication required - Stripe calls this)
+$router->post('/api/v1/payments/webhook', 'Payment\PaymentController@webhook');
+
+// Authentication (with rate limiting to prevent brute force)
+$router->group(['middleware' => ['ratelimit']], function($router) {
+    $router->post('/api/v1/auth/register', 'Auth\AuthController@register');
+    $router->post('/api/v1/auth/login', 'Auth\AuthController@login');
+    $router->post('/api/v1/auth/refresh', 'Auth\AuthController@refresh');
+
+    // Customer authentication (guest checkout)
+    $router->post('/api/v1/customers/register', 'Customer\CustomerController@register');
+    $router->post('/api/v1/customers/login', 'Customer\CustomerController@login');
+
+    // Public branches (for customer ordering - view active branches)
+    $router->get('/api/v1/branches/active', 'Branch\BranchController@active');
+    $router->get('/api/v1/branches/{id}', 'Branch\BranchController@show');
+});
 
 // ============================================
 // AUTHENTICATED ROUTES
 // ============================================
 
-$router->group(['middleware' => ['auth', 'tenant']], function($router) {
+$router->group(['middleware' => ['ratelimit', 'auth', 'tenant']], function($router) {
 
     // Auth endpoints
     $router->post('/api/v1/auth/logout', 'Auth\AuthController@logout');
@@ -52,6 +65,38 @@ $router->group(['middleware' => ['auth', 'tenant']], function($router) {
     $router->post('/api/v1/orders', 'Order\OrderController@store');
     $router->put('/api/v1/orders/{id}/status', 'Order\OrderController@updateStatus');
     $router->delete('/api/v1/orders/{id}', 'Order\OrderController@cancel');
+
+    // Branches (Restaurant Management)
+    $router->get('/api/v1/branches', 'Branch\BranchController@index');
+    $router->post('/api/v1/branches', 'Branch\BranchController@store');
+    $router->put('/api/v1/branches/{id}', 'Branch\BranchController@update');
+    $router->delete('/api/v1/branches/{id}', 'Branch\BranchController@destroy');
+    $router->post('/api/v1/branches/{id}/hours', 'Branch\BranchController@setHours');
+
+    // Payment Management (Refunds)
+    $router->post('/api/v1/payments/order/{order_id}/refund', 'Payment\PaymentController@refund');
+});
+
+// ============================================
+// CUSTOMER ROUTES (Session-based for guest checkout)
+// ============================================
+
+$router->group(['middleware' => ['ratelimit']], function($router) {
+    // Customer profile
+    $router->get('/api/v1/customers/me', 'Customer\CustomerController@me');
+    $router->put('/api/v1/customers/me', 'Customer\CustomerController@update');
+    $router->post('/api/v1/customers/logout', 'Customer\CustomerController@logout');
+
+    // Customer addresses
+    $router->get('/api/v1/customers/addresses', 'Customer\CustomerController@listAddresses');
+    $router->post('/api/v1/customers/addresses', 'Customer\CustomerController@addAddress');
+    $router->put('/api/v1/customers/addresses/{id}', 'Customer\CustomerController@updateAddress');
+    $router->delete('/api/v1/customers/addresses/{id}', 'Customer\CustomerController@deleteAddress');
+
+    // Customer payments
+    $router->post('/api/v1/payments/intent', 'Payment\PaymentController@createIntent');
+    $router->post('/api/v1/payments/confirm', 'Payment\PaymentController@confirmPayment');
+    $router->get('/api/v1/payments/order/{order_id}', 'Payment\PaymentController@show');
 });
 
 return $router;

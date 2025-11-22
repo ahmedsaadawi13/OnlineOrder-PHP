@@ -5,6 +5,7 @@ namespace App\Controllers\Menu;
 use App\Core\Request;
 use App\Core\Response;
 use App\Models\Category;
+use App\Validators\Validator;
 
 class CategoryController
 {
@@ -45,14 +46,25 @@ class CategoryController
      */
     public function store(Request $request)
     {
+        $validator = Validator::make($request->all(), [
+            'name' => 'required|min:2|max:255',
+            'name_ar' => 'max:255',
+            'slug' => 'max:255',
+            'description' => 'max:1000',
+            'description_ar' => 'max:1000',
+            'image_url' => 'url',
+            'sort_order' => 'integer',
+            'is_active' => 'boolean'
+        ]);
+
+        if ($validator->fails()) {
+            return $this->response->error('Validation failed', 422, $validator->errors());
+        }
+
         $data = $request->only([
             'name', 'name_ar', 'slug', 'description',
             'description_ar', 'image_url', 'sort_order', 'is_active'
         ]);
-
-        if (!$data['name']) {
-            return $this->response->error('Category name is required', 422);
-        }
 
         // Generate slug if not provided
         if (empty($data['slug'])) {
@@ -80,6 +92,20 @@ class CategoryController
 
         if (!$category) {
             return $this->response->error('Category not found', 404);
+        }
+
+        $validator = Validator::make($request->all(), [
+            'name' => 'min:2|max:255',
+            'name_ar' => 'max:255',
+            'description' => 'max:1000',
+            'description_ar' => 'max:1000',
+            'image_url' => 'url',
+            'sort_order' => 'integer',
+            'is_active' => 'boolean'
+        ]);
+
+        if ($validator->fails()) {
+            return $this->response->error('Validation failed', 422, $validator->errors());
         }
 
         $data = $request->only([

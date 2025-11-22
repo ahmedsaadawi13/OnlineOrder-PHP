@@ -70,4 +70,41 @@ class Customer extends BaseModel
 
         return $customer;
     }
+
+    /**
+     * Update last login timestamp
+     */
+    public static function updateLastLogin(int $id): void
+    {
+        self::update($id, ['last_login_at' => now()]);
+    }
+
+    /**
+     * Get customer orders count
+     */
+    public static function getOrdersCount(int $customerId): int
+    {
+        $result = self::queryOne(
+            "SELECT COUNT(*) as count FROM orders WHERE customer_id = :customer_id",
+            ['customer_id' => $customerId]
+        );
+
+        return (int) ($result['count'] ?? 0);
+    }
+
+    /**
+     * Get customer total spent
+     */
+    public static function getTotalSpent(int $customerId): float
+    {
+        $result = self::queryOne(
+            "SELECT SUM(total_amount) as total FROM orders
+             WHERE customer_id = :customer_id
+             AND status = 'completed'
+             AND payment_status = 'completed'",
+            ['customer_id' => $customerId]
+        );
+
+        return (float) ($result['total'] ?? 0);
+    }
 }

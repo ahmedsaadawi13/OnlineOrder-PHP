@@ -5,6 +5,7 @@ namespace App\Controllers\Menu;
 use App\Core\Request;
 use App\Core\Response;
 use App\Models\MenuItem;
+use App\Validators\Validator;
 
 class MenuItemController
 {
@@ -67,16 +68,35 @@ class MenuItemController
      */
     public function store(Request $request)
     {
+        $validator = Validator::make($request->all(), [
+            'category_id' => 'required|integer|exists:categories,id',
+            'name' => 'required|min:2|max:255',
+            'name_ar' => 'max:255',
+            'slug' => 'max:255',
+            'description' => 'max:1000',
+            'description_ar' => 'max:1000',
+            'price' => 'required|numeric',
+            'image_url' => 'url',
+            'calories' => 'integer',
+            'preparation_time' => 'integer',
+            'is_available' => 'boolean',
+            'is_featured' => 'boolean',
+            'is_vegetarian' => 'boolean',
+            'is_vegan' => 'boolean',
+            'is_gluten_free' => 'boolean',
+            'sort_order' => 'integer'
+        ]);
+
+        if ($validator->fails()) {
+            return $this->response->error('Validation failed', 422, $validator->errors());
+        }
+
         $data = $request->only([
             'category_id', 'name', 'name_ar', 'slug', 'description',
             'description_ar', 'price', 'image_url', 'calories',
             'preparation_time', 'is_available', 'is_featured',
             'is_vegetarian', 'is_vegan', 'is_gluten_free', 'sort_order'
         ]);
-
-        if (!$data['name'] || !$data['category_id'] || !isset($data['price'])) {
-            return $this->response->error('Name, category, and price are required', 422);
-        }
 
         // Generate slug if not provided
         if (empty($data['slug'])) {
@@ -104,6 +124,28 @@ class MenuItemController
 
         if (!$item) {
             return $this->response->error('Menu item not found', 404);
+        }
+
+        $validator = Validator::make($request->all(), [
+            'category_id' => 'integer|exists:categories,id',
+            'name' => 'min:2|max:255',
+            'name_ar' => 'max:255',
+            'description' => 'max:1000',
+            'description_ar' => 'max:1000',
+            'price' => 'numeric',
+            'image_url' => 'url',
+            'calories' => 'integer',
+            'preparation_time' => 'integer',
+            'is_available' => 'boolean',
+            'is_featured' => 'boolean',
+            'is_vegetarian' => 'boolean',
+            'is_vegan' => 'boolean',
+            'is_gluten_free' => 'boolean',
+            'sort_order' => 'integer'
+        ]);
+
+        if ($validator->fails()) {
+            return $this->response->error('Validation failed', 422, $validator->errors());
         }
 
         $data = $request->only([

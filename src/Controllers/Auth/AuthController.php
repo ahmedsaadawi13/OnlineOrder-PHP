@@ -8,6 +8,7 @@ use App\Models\User;
 use App\Models\Restaurant;
 use App\Services\Auth\JWTService;
 use App\Core\Database;
+use App\Validators\Validator;
 
 class AuthController
 {
@@ -25,12 +26,17 @@ class AuthController
      */
     public function login(Request $request)
     {
+        $validator = Validator::make($request->all(), [
+            'email' => 'required|email',
+            'password' => 'required|min:6'
+        ]);
+
+        if ($validator->fails()) {
+            return $this->response->error('Validation failed', 422, $validator->errors());
+        }
+
         $email = $request->input('email');
         $password = $request->input('password');
-
-        if (!$email || !$password) {
-            return $this->response->error('Email and password are required', 422);
-        }
 
         // Find user
         $user = User::findByEmail($email);
@@ -83,25 +89,26 @@ class AuthController
      */
     public function register(Request $request)
     {
+        $validator = Validator::make($request->all(), [
+            'restaurant_name' => 'required|min:3|max:255',
+            'email' => 'required|email|unique:restaurants,email',
+            'phone' => 'phone',
+            'password' => 'required|min:8|confirmed',
+            'first_name' => 'required|alpha|min:2',
+            'last_name' => 'required|alpha|min:2',
+            'currency' => 'string|max:3',
+            'timezone' => 'string|max:50'
+        ]);
+
+        if ($validator->fails()) {
+            return $this->response->error('Validation failed', 422, $validator->errors());
+        }
+
         $data = $request->only([
             'restaurant_name', 'email', 'phone', 'password',
             'password_confirmation', 'first_name', 'last_name',
             'currency', 'timezone'
         ]);
-
-        // Validate
-        if (!$data['restaurant_name'] || !$data['email'] || !$data['password']) {
-            return $this->response->error('Missing required fields', 422);
-        }
-
-        if ($data['password'] !== $data['password_confirmation']) {
-            return $this->response->error('Password confirmation does not match', 422);
-        }
-
-        // Check if email already exists
-        if (Restaurant::whereOne('email', $data['email'])) {
-            return $this->response->error('Email already registered', 422);
-        }
 
         Database::beginTransaction();
 

@@ -6,6 +6,7 @@ use App\Core\Request;
 use App\Core\Response;
 use App\Models\Order;
 use App\Core\Database;
+use App\Validators\Validator;
 
 class OrderController
 {
@@ -86,20 +87,30 @@ class OrderController
      */
     public function store(Request $request)
     {
+        $validator = Validator::make($request->all(), [
+            'customer_id' => 'integer|exists:customers,id',
+            'branch_id' => 'required|integer|exists:branches,id',
+            'order_type' => 'required|in:dine_in,takeout,delivery',
+            'delivery_address_id' => 'integer',
+            'special_instructions' => 'max:1000',
+            'scheduled_at' => 'date',
+            'coupon_code' => 'max:50',
+            'items' => 'required|array',
+            'items.*.item_id' => 'required|integer',
+            'items.*.quantity' => 'required|integer|min:1',
+            'items.*.special_instructions' => 'max:500'
+        ]);
+
+        if ($validator->fails()) {
+            return $this->response->error('Validation failed', 422, $validator->errors());
+        }
+
         $data = $request->only([
             'customer_id', 'branch_id', 'order_type', 'delivery_address_id',
             'special_instructions', 'scheduled_at', 'coupon_code'
         ]);
 
         $items = $request->input('items', []);
-
-        if (empty($items)) {
-            return $this->response->error('Order must have at least one item', 422);
-        }
-
-        if (!$data['branch_id']) {
-            return $this->response->error('Branch is required', 422);
-        }
 
         try {
             // Calculate order totals
@@ -194,6 +205,16 @@ class OrderController
     public function updateStatus(Request $request)
     {
         $id = $request->param('id');
+
+        $validator = Validator::make($request->all(), [
+            'status' => 'required|in:pending,confirmed,preparing,ready_for_pickup,out_for_delivery,delivered,completed,cancelled',
+            'notes' => 'max:1000'
+        ]);
+
+        if ($validator->fails()) {
+            return $this->response->error('Validation failed', 422, $validator->errors());
+        }
+
         $status = $request->input('status');
         $notes = $request->input('notes');
 
@@ -201,12 +222,6 @@ class OrderController
 
         if (!$order) {
             return $this->response->error('Order not found', 404);
-        }
-
-        $validStatuses = ['pending', 'confirmed', 'preparing', 'ready_for_pickup', 'out_for_delivery', 'delivered', 'completed', 'cancelled'];
-
-        if (!in_array($status, $validStatuses)) {
-            return $this->response->error('Invalid status', 422);
         }
 
         try {
@@ -229,6 +244,15 @@ class OrderController
     public function cancel(Request $request)
     {
         $id = $request->param('id');
+
+        $validator = Validator::make($request->all(), [
+            'reason' => 'required|max:500'
+        ]);
+
+        if ($validator->fails()) {
+            return $this->response->error('Validation failed', 422, $validator->errors());
+        }
+
         $reason = $request->input('reason');
 
         $order = Order::find($id);
