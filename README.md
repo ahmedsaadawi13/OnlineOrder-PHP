@@ -100,7 +100,7 @@ Comprehensive documentation available in `/docs`:
 
 1. **Clone the repository**
 ```bash
-git clone https://github.com/yourusername/OnlineOrder-PHP.git
+git clone https://github.com/ahmedsaadawi13/OnlineOrder-PHP.git
 cd OnlineOrder-PHP
 ```
 
@@ -364,8 +364,8 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 ## 💬 Support
 
 - **Documentation**: [/docs](/docs)
-- **Issues**: [GitHub Issues](https://github.com/yourusername/OnlineOrder-PHP/issues)
-- **Email**: support@yourapp.com
+- **Issues**: [GitHub Issues](https://github.com/ahmedsaadawi13/OnlineOrder-PHP/issues)
+- **Email**: ahmed.sha3ban13@gmail.com
 
 ---
 
